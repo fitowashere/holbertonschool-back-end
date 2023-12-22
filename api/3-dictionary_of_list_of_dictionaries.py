@@ -1,33 +1,33 @@
 #!/usr/bin/python3
-"""Script to export data in the JSON format"""
-
+"""Gather data from an API"""
 import json
 import requests
-from sys import argv
 
 
-def information_employee(id_employee):
-    """Returns information about employees"""
-    employee_name = ""
-    task_data = []
+def fetch_data():
+    users_url = "https://jsonplaceholder.typicode.com/users"
+    todos_url = "https://jsonplaceholder.typicode.com/todos"
 
-    url_users = 'https://jsonplaceholder.typicode.com/users'
-    url_todos = 'https://jsonplaceholder.typicode.com/todos'
+    users = requests.get(users_url).json()
+    tasks = requests.get(todos_url).json()
 
-    response_one = requests.get(url_users)
-    response_two = requests.get(url_todos)
+    user_task_dict = {}
 
-    if response_one.status_code == 200:
-        response_usr = response_one.json()
-        response_tod = response_two.json()
+    for user in users:
+        user_id = user['id']
+        username = user['username']
 
-        for user in response_usr:
-            if user['id'] == id_employee:
-                employee_name = user['username']
+        user_task_dict[user_id] = [
+            {
+                "username": username,
+                "task": task['title'],
+                "completed": task['completed']
+            }
+            for task in tasks if task['userId'] == user_id
+        ]
 
-                for tod in response_tod:
-                    if tod['userId'] == id_employee:
-                        task_data.append(tod)
+    with open('todo_all_employees.json', 'w') as jsonfile:
+        json.dump(user_task_dict, jsonfile)
 
-        # Call the function to export data to JSON
-        export_to_json(id_employee, employee_name, task_data)
+if __name__ == "__main__":
+    fetch_data()
